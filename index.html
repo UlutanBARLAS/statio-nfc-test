@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Statio NFC Deneme</title>
+<style>
+  :root {
+    --bg: #0b1020; --surface: #141b2e; --surface-2: #1c2540; --border: #2a3556;
+    --text: #e8ecf5; --muted: #9aa6c2; --accent: #6d8cff; --accent-ink: #0b1020;
+    --ok: #3ccf8e; --warn: #f5c451; --bad: #ff6b6b; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 16px 16px 48px; }
+  h1 { font-size: 20px; margin: 4px 0 2px; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 0 0 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  select, input { width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 16px; }
+  button { min-height: 56px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; }
+  button:active { transform: scale(0.97); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; width: 100%; min-height: 72px; font-size: 19px; }
+  button.primary.on { background: var(--ok); }
+  button.danger { color: var(--bad); border-color: #5a2a33; }
+  button.ghost { background: transparent; }
+  button:disabled { opacity: .5; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; background: var(--surface-2); border: 1px solid var(--border); }
+  .pill.ok { color: var(--ok); border-color: #1e5a43; }
+  .pill.warn { color: var(--warn); border-color: #5e4c1c; }
+  .pill.bad { color: var(--bad); border-color: #5a2a33; }
+  .status { min-height: 24px; margin-top: 10px; font-size: 15px; }
+  .card { background: var(--surface-2); border-radius: 12px; padding: 12px; margin-top: 12px; border: 1px solid var(--border); }
+  .card.flash { animation: flash .6s ease-out; }
+  @keyframes flash { from { box-shadow: 0 0 0 3px var(--ok); } to { box-shadow: 0 0 0 0 transparent; } }
+  .kv { display: grid; grid-template-columns: 110px 1fr; gap: 4px 10px; font-size: 14px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; word-break: break-all; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .tablewrap { overflow-x: auto; }
+  .note { font-size: 13px; color: var(--muted); }
+  .ok-t { color: var(--ok); } .bad-t { color: var(--bad); } .warn-t { color: var(--warn); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Statio NFC Deneme</h1>
+  <p class="sub">M0 saha testi: etiket okuma, mesafe, yüzey ve yazma denemeleri. Sonuçlar bu telefonda saklanır, CSV olarak indirilebilir.</p>
+
+  <section id="support">
+    <h2>Cihaz durumu</h2>
+    <div class="row" id="supportPills"></div>
+    <p class="note" id="supportNote"></p>
+  </section>
+
+  <section>
+    <h2>1. Deneme koşulları</h2>
+    <div class="grid">
+      <div>
+        <label for="surface">Yüzey</label>
+        <select id="surface">
+          <option>Ahşap</option><option>Plastik</option><option>Karton</option><option>Duvar / boya</option>
+          <option>Cam</option><option>Metal</option><option>Kart (elde)</option><option>Diğer</option>
+        </select>
+      </div>
+      <div>
+        <label for="distance">Mesafe</label>
+        <select id="distance">
+          <option>Temas</option><option>1 cm</option><option>2 cm</option><option>3 cm</option><option>4 cm</option><option>5 cm ve üstü</option>
+        </select>
+      </div>
+      <div>
+        <label for="caseOn">Telefon kılıfı</label>
+        <select id="caseOn"><option>Kılıfsız</option><option>Kılıflı</option></select>
+      </div>
+      <div>
+        <label for="tester">Not (isteğe bağlı)</label>
+        <input id="tester" placeholder="ör. eldivenle, güneş altında">
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Okuma</h2>
+    <button class="primary" id="scanBtn">Okumayı başlat</button>
+    <div class="row" style="margin-top:10px">
+      <button class="ghost" id="failBtn" style="flex:1">Okumadı olarak kaydet</button>
+    </div>
+    <div class="status" id="scanStatus"></div>
+    <div class="card" id="lastCard" hidden>
+      <dl class="kv">
+        <dt>Etiket</dt><dd id="lastLabel"></dd>
+        <dt>Seri no (UID)</dt><dd class="mono" id="lastUid"></dd>
+        <dt>İçerik</dt><dd id="lastRecords"></dd>
+        <dt>Saat</dt><dd id="lastTime"></dd>
+        <dt>Bu etiket</dt><dd id="lastCount"></dd>
+      </dl>
+      <div class="row" style="margin-top:10px">
+        <input id="labelInput" placeholder="Bu etikete ad ver (ör. K-01 ahşap kapı)" style="flex:1; min-width: 180px">
+        <button id="labelSave">Kaydet</button>
+      </div>
+    </div>
+    <p class="note">Web üzerinden çip tipi (NTAG213 gibi) görülemez; yalnızca seri numarası ve içerik okunur. Çip tipini doğrulamak için NXP TagInfo uygulamasını kullanın.</p>
+  </section>
+
+  <section>
+    <h2>3. Etikete yazma</h2>
+    <div class="grid">
+      <div>
+        <label for="writeType">Tür</label>
+        <select id="writeType"><option value="url">Link (URL)</option><option value="text">Metin</option></select>
+      </div>
+      <div style="grid-column: span 2">
+        <label for="writeValue">İçerik</label>
+        <input id="writeValue" value="https://example.com/statio-test/K-01" class="mono">
+      </div>
+    </div>
+    <div style="margin-top:10px"><button id="writeBtn" style="width:100%">Yaz: etiketi telefona yaklaştır</button></div>
+    <div class="status" id="writeStatus"></div>
+    <p class="note">Yazma işlemi etiketin eski içeriğini değiştirir. Bu sayfa etiketi <b>kilitlemez</b>; NTAG213'te kilitleme geri alınamaz, başka uygulamalarda da "salt okunur yap" kullanmayın.</p>
+  </section>
+
+  <section>
+    <h2>4. Kayıtlar</h2>
+    <div class="row" style="margin-bottom:10px">
+      <span class="pill" id="countPill">0 kayıt</span>
+      <span class="pill ok" id="okPill">0 okundu</span>
+      <span class="pill bad" id="failPill">0 okumadı</span>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <button id="csvBtn" style="flex:1">CSV indir</button>
+      <button id="copyBtn" style="flex:1">Kopyala</button>
+      <button class="danger" id="clearBtn" style="flex:1">Temizle</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Saat</th><th>Sonuç</th><th>Etiket</th><th>Yüzey</th><th>Mesafe</th><th>Kılıf</th><th>İçerik</th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const LOG_KEY = 'statio-nfc-log-v1', LABEL_KEY = 'statio-nfc-labels-v1';
+  const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  let log = load(LOG_KEY, []);
+  let labels = load(LABEL_KEY, {});
+  let scanCtl = null, lastUid = null;
+
+  // --- cihaz durumu
+  const hasNfc = 'NDEFReader' in window;
+  const secure = window.isSecureContext;
+  const pills = [
+    [secure ? 'ok' : 'bad', secure ? 'Güvenli bağlantı (https)' : 'Güvenli bağlantı yok'],
+    [hasNfc ? 'ok' : 'bad', hasNfc ? 'Web NFC destekleniyor' : 'Web NFC yok'],
+  ];
+  $('supportPills').innerHTML = pills.map(([c, t]) => `<span class="pill ${c}">${t}</span>`).join('');
+  if (!hasNfc) {
+    $('supportNote').textContent = 'Bu tarayıcı web üzerinden NFC okuyamıyor. Android telefonda Chrome ile açın. iPhone (Safari) web üzerinden NFC desteklemez.';
+    ['scanBtn', 'writeBtn', 'failBtn'].forEach(id => $(id).disabled = true);
+  } else if (!secure) {
+    $('supportNote').textContent = 'NFC yalnızca https ile açılan sayfalarda çalışır.';
+  } else {
+    $('supportNote').textContent = 'Telefonun NFC ayarı açık olmalı. Anten genelde arka kameranın yakınındadır; etiketi oraya tutun.';
+  }
+
+  // --- geri bildirim
+  let audioCtx = null;
+  function beep(ok = true) {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = ok ? 1046 : 220; o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (ok ? 0.15 : 0.35));
+      o.start(); o.stop(audioCtx.currentTime + (ok ? 0.15 : 0.35));
+    } catch {}
+    if (navigator.vibrate) navigator.vibrate(ok ? 40 : [80, 60, 80]);
+  }
+  const setStatus = (el, text, cls = '') => { el.className = 'status ' + cls; el.textContent = text; };
+  const now = () => new Date();
+  const fmtTime = d => d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const conditions = () => ({ surface: $('surface').value, distance: $('distance').value, case: $('caseOn').value, note: $('tester').value.trim() });
+
+  // --- NDEF kayıtlarını çöz
+  function decodeRecord(r) {
+    try {
+      if (r.recordType === 'url' || r.recordType === 'absolute-url') return 'Link: ' + new TextDecoder().decode(r.data);
+      if (r.recordType === 'text') {
+        const dec = new TextDecoder(r.encoding || 'utf-8');
+        return 'Metin: ' + dec.decode(r.data);
+      }
+      if (r.recordType === 'empty') return 'Boş kayıt';
+      if (r.mediaType) return r.mediaType + ' (' + (r.data ? r.data.byteLength : 0) + ' bayt)';
+      return r.recordType + (r.data ? ' (' + r.data.byteLength + ' bayt)' : '');
+    } catch (e) { return r.recordType + ' (çözülemedi)'; }
+  }
+
+  // --- kayıt defteri
+  function addLog(entry) {
+    log.unshift(entry); save(LOG_KEY, log); renderLog();
+  }
+  function renderLog() {
+    const ok = log.filter(l => l.result === 'okundu').length, bad = log.filter(l => l.result.startsWith('okuma') || l.result.startsWith('okunama')).length;
+    $('countPill').textContent = log.length + ' kayıt';
+    $('okPill').textContent = ok + ' okundu';
+    $('failPill').textContent = bad + ' okumadı';
+    $('logBody').innerHTML = log.slice(0, 200).map(l => `<tr>
+      <td>${l.time}</td>
+      <td class="${l.result === 'okundu' || l.result === 'yazıldı' ? 'ok-t' : 'bad-t'}">${l.result}</td>
+      <td>${esc(l.label || l.uid || '—')}</td><td>${esc(l.surface)}</td><td>${esc(l.distance)}</td><td>${esc(l.case)}</td>
+      <td>${esc(l.content || '')}</td></tr>`).join('');
+  }
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // --- okuma
+  $('scanBtn').addEventListener('click', async () => {
+    if (scanCtl) { scanCtl.abort(); scanCtl = null; $('scanBtn').textContent = 'Okumayı başlat'; $('scanBtn').classList.remove('on'); setStatus($('scanStatus'), 'Okuma durduruldu.'); return; }
+    try {
+      const reader = new NDEFReader();
+      scanCtl = new AbortController();
+      await reader.scan({ signal: scanCtl.signal });
+      $('scanBtn').textContent = 'Okuma açık: durdurmak için dokun';
+      $('scanBtn').classList.add('on');
+      setStatus($('scanStatus'), 'Etiketi telefonun arkasına yaklaştırın…');
+      reader.onreadingerror = () => {
+        beep(false);
+        setStatus($('scanStatus'), 'Etiket algılandı ama okunamadı (NDEF biçiminde değil ya da boş olabilir).', 'warn-t');
+        addLog({ time: fmtTime(now()), iso: now().toISOString(), result: 'okunamadı (hata)', uid: '', label: '', content: '', ...conditions() });
+      };
+      reader.onreading = ev => {
+        const t = now(), uid = ev.serialNumber || '(seri no yok)';
+        const content = [...ev.message.records].map(decodeRecord).join(' | ') || 'Boş etiket';
+        const prev = log.filter(l => l.uid === uid && l.result === 'okundu');
+        const gap = prev.length ? Math.round((t - new Date(prev[0].iso)) / 1000) : null;
+        beep(true);
+        lastUid = uid;
+        $('lastCard').hidden = false;
+        $('lastCard').classList.remove('flash'); void $('lastCard').offsetWidth; $('lastCard').classList.add('flash');
+        $('lastLabel').textContent = labels[uid] || 'Adsız etiket';
+        $('lastUid').textContent = uid;
+        $('lastRecords').textContent = content;
+        $('lastTime').textContent = fmtTime(t);
+        $('lastCount').textContent = (prev.length + 1) + '. okuma' + (gap !== null ? ` · öncekinden ${gap} sn sonra` : '');
+        $('labelInput').value = labels[uid] || '';
+        setStatus($('scanStatus'), 'Okundu ✓', 'ok-t');
+        addLog({ time: fmtTime(t), iso: t.toISOString(), result: 'okundu', uid, label: labels[uid] || '', content, ...conditions() });
+      };
+    } catch (e) {
+      scanCtl = null;
+      const msg = e.name === 'NotAllowedError' ? 'NFC izni verilmedi. Tarayıcı ayarlarından izin verin.'
+        : e.name === 'NotSupportedError' ? 'NFC kapalı ya da desteklenmiyor. Telefon ayarlarından NFC\'yi açın.'
+        : 'Okuma başlatılamadı: ' + e.message;
+      setStatus($('scanStatus'), msg, 'bad-t');
+    }
+  });
+
+  $('failBtn').addEventListener('click', () => {
+    beep(false);
+    addLog({ time: fmtTime(now()), iso: now().toISOString(), result: 'okumadı', uid: '', label: '', content: '', ...conditions() });
+    setStatus($('scanStatus'), 'Okumadı olarak kaydedildi (' + conditions().surface + ', ' + conditions().distance + ').', 'bad-t');
+  });
+
+  $('labelSave').addEventListener('click', () => {
+    if (!lastUid) return;
+    const v = $('labelInput').value.trim();
+    if (v) labels[lastUid] = v; else delete labels[lastUid];
+    save(LABEL_KEY, labels);
+    $('lastLabel').textContent = v || 'Adsız etiket';
+    log.forEach(l => { if (l.uid === lastUid) l.label = v; }); save(LOG_KEY, log); renderLog();
+  });
+
+  // --- yazma
+  $('writeBtn').addEventListener('click', async () => {
+    const type = $('writeType').value, value = $('writeValue').value.trim();
+    if (!value) { setStatus($('writeStatus'), 'Önce içerik yazın.', 'bad-t'); return; }
+    if (type === 'url' && !/^https?:\/\//i.test(value)) { setStatus($('writeStatus'), 'Link https:// ile başlamalı.', 'bad-t'); return; }
+    try {
+      if (scanCtl) { scanCtl.abort(); scanCtl = null; $('scanBtn').textContent = 'Okumayı başlat'; $('scanBtn').classList.remove('on'); }
+      const writer = new NDEFReader();
+      setStatus($('writeStatus'), 'Etiketi telefona yaklaştırın ve yazılana kadar sabit tutun…');
+      await writer.write({ records: [{ recordType: type, data: value }] }, { overwrite: true });
+      beep(true);
+      setStatus($('writeStatus'), 'Yazıldı ✓ ' + value, 'ok-t');
+      addLog({ time: fmtTime(now()), iso: now().toISOString(), result: 'yazıldı', uid: '', label: '', content: value, ...conditions() });
+    } catch (e) {
+      beep(false);
+      setStatus($('writeStatus'), 'Yazılamadı: ' + (e.name === 'NotAllowedError' ? 'izin yok ya da etiket kilitli.' : e.message), 'bad-t');
+    }
+  });
+
+  // --- dışa aktarma
+  const CSV_COLS = ['iso', 'time', 'result', 'uid', 'label', 'surface', 'distance', 'case', 'note', 'content'];
+  const toCsv = () => [CSV_COLS.join(',')].concat(log.slice().reverse().map(l => CSV_COLS.map(c => '"' + String(l[c] ?? '').replace(/"/g, '""') + '"').join(','))).join('\n');
+  $('csvBtn').addEventListener('click', () => {
+    const blob = new Blob(['﻿' + toCsv()], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'statio-nfc-deneme-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.csv';
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('copyBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(toCsv()); $('copyBtn').textContent = 'Kopyalandı ✓'; }
+    catch { $('copyBtn').textContent = 'Kopyalanamadı'; }
+    setTimeout(() => $('copyBtn').textContent = 'Kopyala', 1500);
+  });
+  $('clearBtn').addEventListener('click', () => {
+    if (!confirm('Bütün kayıtlar silinsin mi? (Etiket adları korunur)')) return;
+    log = []; save(LOG_KEY, log); renderLog();
+  });
+
+  renderLog();
+})();
+</script>
+</body>
+</html>
