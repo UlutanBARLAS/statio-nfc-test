@@ -66,7 +66,7 @@
       <div>
         <label for="surface">Yüzey</label>
         <select id="surface">
-          <option>Ahşap</option><option>Plastik</option><option>Karton</option><option>Duvar / boya</option>
+          <option>Elde (yüzey yok)</option><option>Ahşap</option><option>Plastik</option><option>Karton</option><option>Duvar / boya</option>
           <option>Cam</option><option>Metal</option><option>Kart (elde)</option><option>Diğer</option>
         </select>
       </div>
@@ -78,7 +78,7 @@
       </div>
       <div>
         <label for="caseOn">Telefon kılıfı</label>
-        <select id="caseOn"><option>Kılıfsız</option><option>Kılıflı</option></select>
+        <select id="caseOn"><option>Kılıfsız</option><option>Kılıflı (silikon)</option><option>Kılıflı (kalın / cüzdan)</option></select>
       </div>
       <div>
         <label for="tester">Not (isteğe bağlı)</label>
@@ -89,6 +89,7 @@
 
   <section>
     <h2>2. Okuma</h2>
+    <p class="note" id="condSummary" style="margin:0 0 10px"></p>
     <button class="primary" id="scanBtn">Okumayı başlat</button>
     <div class="row" style="margin-top:10px">
       <button class="ghost" id="failBtn" style="flex:1">Okumadı olarak kaydet</button>
@@ -192,6 +193,23 @@
   const now = () => new Date();
   const fmtTime = d => d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const conditions = () => ({ surface: $('surface').value, distance: $('distance').value, case: $('caseOn').value, note: $('tester').value.trim() });
+  const COND_KEY = 'statio-nfc-conditions-v1';
+  const savedCond = load(COND_KEY, null);
+  if (savedCond) {
+    for (const [id, k] of [['surface', 'surface'], ['distance', 'distance'], ['caseOn', 'case'], ['tester', 'note']]) {
+      const el = $(id);
+      if (savedCond[k] == null) continue;
+      if (el.tagName === 'SELECT' && ![...el.options].some(o => o.value === savedCond[k])) continue;
+      el.value = savedCond[k];
+    }
+  }
+  const showCond = () => {
+    const c = conditions();
+    $('condSummary').textContent = 'Kaydedilecek koşul: ' + [c.surface, c.distance, c.case, c.note].filter(Boolean).join(' · ');
+    save(COND_KEY, c);
+  };
+  for (const id of ['surface', 'distance', 'caseOn', 'tester']) $(id).addEventListener('input', showCond);
+  showCond();
 
   // --- NDEF kayıtlarını çöz
   function decodeRecord(r) {
