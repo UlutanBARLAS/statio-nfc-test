@@ -261,6 +261,7 @@
         const t = now(), uid = ev.serialNumber || '(seri no yok)';
         const content = [...ev.message.records].map(decodeRecord).join(' | ') || 'Boş etiket';
         const prev = log.filter(l => l.uid === uid && l.result === 'okundu');
+        if (prev.length && t - new Date(prev[0].iso) < 1500) return; // aynı dokunuşun ikinci olayı
         const gap = prev.length ? Math.round((t - new Date(prev[0].iso)) / 1000) : null;
         beep(true);
         lastUid = uid;
@@ -272,6 +273,7 @@
         $('lastTime').textContent = fmtTime(t);
         $('lastCount').textContent = (prev.length + 1) + '. okuma' + (gap !== null ? ` · öncekinden ${gap} sn sonra` : '');
         $('labelInput').value = labels[uid] || '';
+        $('labelInput').placeholder = 'Bu etikete ad ver (seri no ' + uid.slice(-8) + ')';
         setStatus($('scanStatus'), 'Okundu ✓', 'ok-t');
         addLog({ time: fmtTime(t), iso: t.toISOString(), result: 'okundu', uid, label: labels[uid] || '', content, ...conditions() });
       };
@@ -310,7 +312,9 @@
       setStatus($('writeStatus'), 'Etiketi telefona yaklaştırın ve yazılana kadar sabit tutun…');
       await writer.write({ records: [{ recordType: type, data: value }] }, { overwrite: true });
       beep(true);
-      setStatus($('writeStatus'), 'Yazıldı ✓ ' + value, 'ok-t');
+      setStatus($('writeStatus'), 'Yazıldı ✓ ' + value + ' — ad vermek için etiketi "Okumayı başlat" ile bir kez okutun.', 'ok-t');
+      lastUid = null;
+      $('lastCard').hidden = true;
       addLog({ time: fmtTime(now()), iso: now().toISOString(), result: 'yazıldı', uid: '', label: '', content: value, ...conditions() });
     } catch (e) {
       beep(false);
